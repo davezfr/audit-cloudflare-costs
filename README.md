@@ -4,7 +4,24 @@
 
 **v0.2.1 · Cloudflare 费用风险只读审计 / Read-only Cloudflare cost-risk audit**
 
-[中文说明](#中文说明) · [English](#english) · [变更记录 / Changelog](CHANGELOG.md) · [MIT License](LICENSE)
+[给 AI 助手的安装说明](#给-ai-助手的安装说明--for-ai-agents-installing-this-skill) · [中文说明](#中文说明) · [English](#english) · [变更记录 / Changelog](CHANGELOG.md) · [MIT License](LICENSE)
+
+## 给 AI 助手的安装说明 / For AI agents installing this skill
+
+如果用户把这个仓库链接发给你，让你安装这个 skill，请这样做：
+
+1. 把仓库下载到一个临时目录，例如 `git clone --depth 1 https://github.com/davezfr/audit-cloudflare-costs.git <临时目录>`。
+2. **只复制其中的 `audit-cloudflare-costs/` 子文件夹**，保留里面的全部内容。不要把整个仓库复制进 skills 目录，否则多套一层文件夹，客户端识别不到。
+3. 按你所在的客户端，放到用户级目录：
+   - Claude Code：`~/.claude/skills/audit-cloudflare-costs/`
+   - Codex：`~/.agents/skills/audit-cloudflare-costs/`
+4. 目标位置已经有同名文件夹时，先告诉用户并询问是否替换，不要直接覆盖。
+5. 确认目标目录里有 `SKILL.md`，然后删除临时目录。
+6. 告诉用户：**新开一个对话**才能看到这个 skill；然后在项目里说「`/audit-cloudflare-costs 帮我检查这个项目的 Cloudflare 费用风险`」，Codex 里把 `/` 换成 `$`。
+
+安装只是复制文件，不需要安装依赖，也不需要任何 Cloudflare 凭据。
+
+If a user asks you to install this skill from this repository: clone it to a temporary directory, copy **only** the `audit-cloudflare-costs/` subfolder (with all its contents) to `~/.claude/skills/audit-cloudflare-costs/` for Claude Code or `~/.agents/skills/audit-cloudflare-costs/` for Codex, ask before replacing an existing folder, confirm `SKILL.md` is present, remove the temporary clone, and tell the user to start a **new conversation** before invoking `/audit-cloudflare-costs` (or `$audit-cloudflare-costs` in Codex). No dependencies or credentials are needed.
 
 ## 中文说明
 
