@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0 — 2026-10-07
+
+- 新增可选的 HTML 报告：说一句「生成 HTML 报告」，就会把同一份审计结果填进内置模板，保存为 `cloudflare-cost-audit-YYYY-MM-DD.html`，用浏览器直接打开。
+- 模板 `assets/report-template.html` 不联网、不加载外部字体或脚本，支持浅色和深色模式、手机宽度和打印；所有内容按纯文本渲染。
+- 新增 `references/html-report.md`，规定数据结构、只替换数据块、保存位置和保存前检查。
+- Markdown 仍是默认输出；51 条规则、判定标准和只读审计契约不变。保存报告文件是审计唯一可能创建的文件。
+- README 增加给 AI 助手的安装说明和顶部横幅；新增 `examples/reports/demo-report.html`，由 Codex 用本版生成。
+
 ## v0.2.1 — 2026-10-07
 
 - 默认改为精简 Markdown 报告，让没有开发经验的读者先看懂风险和修复顺序。

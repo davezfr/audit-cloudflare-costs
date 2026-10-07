@@ -114,8 +114,9 @@ reports only after independently completing an explicitly requested demo audit.
 
 ## Report template
 
-Version 0.2.1 emits Markdown only. Do not generate HTML. Preserve the eight-section
-schema and the twelve-field finding record for future template mapping.
+Markdown is the default output. Generate HTML only when the user asks for an HTML,
+web or visual report, by following [html-report.md](html-report.md); it presents the
+same eight sections and twelve-field finding record through the bundled template.
 
 ### Select a mode without asking
 

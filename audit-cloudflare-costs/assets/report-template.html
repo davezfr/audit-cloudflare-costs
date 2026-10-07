@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloudflare 费用风险审计</title>
+<!--
+  audit-cloudflare-costs HTML report template (schema: audit-cloudflare-costs/report@1)
+  Fill this file by replacing ONLY the JSON inside <script id="report-data">.
+  Escape every "<" inside JSON strings as <. Do not edit the markup, styles or script.
+  Self-contained: no network requests, no external fonts or scripts.
+-->
+<style>
+:root{
+  --bg:#fbf6ee; --paper:#fffdf9; --ink:#14213d; --ink-2:#4a5470; --muted:#8a90a2;
+  --line:#ece3d4; --accent:#f26b1d; --accent-soft:#fde8da;
+  --sev-critical:#b42318; --sev-high:#e8590c; --sev-medium:#c98a04; --sev-low:#5c7cfa;
+  --pass:#2f9e44; --gap:#e8590c; --unknown:#9aa0ae; --na:#d6d1c7;
+  --code-bg:#f4ede1; --shadow:0 1px 2px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11141b; --paper:#191d27; --ink:#eef0f5; --ink-2:#b9bfcd; --muted:#868d9e;
+    --line:#2a3040; --accent:#ff8a3d; --accent-soft:#3a2416;
+    --sev-critical:#ff6b5e; --sev-high:#ff8a3d; --sev-medium:#f2c14e; --sev-low:#8fa8ff;
+    --pass:#5fd07a; --gap:#ff8a3d; --unknown:#7d8496; --na:#3a4052;
+    --code-bg:#222838; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei","Segoe UI",sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:40px 20px 64px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+a{color:var(--accent)}
+/* header */
+.hero{position:relative;background:var(--paper);border-radius:20px;padding:28px 28px 24px;box-shadow:var(--shadow);overflow:hidden}
+.hero:before{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:var(--accent-soft)}
+.kicker{position:relative;display:flex;align-items:center;gap:10px;color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.02em}
+.kicker:before{content:"";width:22px;height:3px;border-radius:2px;background:var(--accent)}
+h1{position:relative;margin:10px 0 14px;font-size:30px;line-height:1.25;letter-spacing:-.01em;word-break:break-word}
+.chips{position:relative;display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.chip.ro{background:var(--accent-soft);border-color:transparent;color:var(--accent);font-weight:600}
+/* summary */
+.summary{margin-top:18px;background:var(--ink);color:#fff;border-radius:18px;padding:22px 24px;box-shadow:var(--shadow)}
+@media (prefers-color-scheme: dark){.summary{background:#252c3d}}
+.summary h2{margin:0 0 10px;font-size:15px;color:#ffd2b5;font-weight:700}
+.summary ol{margin:0;padding:0;list-style:none;counter-reset:s}
+.summary li{position:relative;padding:5px 0 5px 30px;font-size:17px;line-height:1.6}
+.summary li:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:8px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sevbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.sevpill{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.1);color:#fff}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+/* sections */
+section{margin-top:34px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 14px}
+.sec-h .n{font-size:13px;font-weight:700;color:var(--accent);font-family:ui-monospace,Menlo,monospace}
+.sec-h h2{margin:0;font-size:21px}
+.card{background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px}
+.lines{margin:0;padding:0;list-style:none}
+.lines li{padding:7px 0;border-bottom:1px dashed var(--line);color:var(--ink-2)}
+.lines li:last-child{border-bottom:0}
+/* layers */
+.layers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.layer{background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.layer .ln{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.layer .ln .num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.layer p{margin:0;color:var(--ink-2);font-size:15px;line-height:1.6}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar span{display:block;height:100%}
+.counts{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--ink-2)}
+.counts b{color:var(--ink);font-variant-numeric:tabular-nums}
+.gaprules{font-size:12.5px;color:var(--muted)}
+/* paths */
+.path{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);color:var(--ink-2)}
+.path:last-child{border-bottom:0}
+.path .tag{flex:none;margin-top:3px;font-size:12px;padding:1px 8px;border-radius:999px;color:#fff;font-weight:600}
+/* findings */
+.finding{position:relative;background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px 16px 24px;margin-bottom:14px;overflow:hidden}
+.finding:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--sev)}
+.f-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.fid{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--muted);font-weight:700}
+.sev{font-size:12.5px;font-weight:700;color:#fff;background:var(--sev);padding:1px 9px;border-radius:999px}
+.lay{font-size:12.5px;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);padding:0 8px;border-radius:999px}
+.finding h3{margin:0 0 10px;font-size:18px;line-height:1.45}
+.row{display:grid;grid-template-columns:92px 1fr;gap:4px 12px;padding:6px 0;border-top:1px dashed var(--line);font-size:15px}
+.row .k{color:var(--muted);font-size:13.5px;padding-top:2px}
+.row .v{color:var(--ink)}
+.loc{display:inline-block;background:var(--code-bg);border-radius:6px;padding:0 6px;margin:0 4px 4px 0;font-family:ui-monospace,Menlo,monospace;font-size:13px;word-break:break-all}
+.f-foot{margin-top:8px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+details{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+summary{cursor:pointer;color:var(--accent);font-size:14px;font-weight:600}
+details .row{grid-template-columns:120px 1fr}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-size:13px;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.verdict{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;color:#fff;white-space:nowrap}
+/* next */
+.next{margin:0;padding:0;list-style:none;counter-reset:n}
+.next li{position:relative;padding:10px 0 10px 40px;border-bottom:1px dashed var(--line)}
+.next li:last-child{border-bottom:0}
+.next li:before{counter-increment:n;content:counter(n);position:absolute;left:0;top:9px;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:800;display:flex;align-items:center;justify-content:center}
+.empty{color:var(--muted);font-style:italic}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1.7}
+footer strong{color:var(--ink-2)}
+.err{background:#fff3f0;color:#b42318;border:1px solid #f4c7bd;padding:16px;border-radius:12px;font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap}
+@media (max-width:640px){
+  .wrap{padding:20px 16px 48px}
+  h1{font-size:24px}
+  .layers{grid-template-columns:1fr}
+  .row,details .row{grid-template-columns:1fr}
+  .summary li{font-size:16px}
+}
+@media print{
+  body{background:#fff}
+  .hero,.card,.layer,.finding{box-shadow:none;border:1px solid #ddd}
+  .finding{break-inside:avoid}
+  details{display:block}
+}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"></main>
+
+<script id="report-data" type="application/json">
+{
+  "schema": "audit-cloudflare-costs/report@1",
+  "lang": "zh-CN",
+  "mode": "compact",
+  "title": "Cloudflare 费用风险审计",
+  "project": "示例项目",
+  "environment": "",
+  "audit_date": "YYYY-MM-DD",
+  "timezone": "",
+  "skill_version": "0.3.0",
+  "summary": ["这是模板占位内容。Agent 生成报告时，会用真实审计结果替换这一整段 JSON。"],
+  "scope": [],
+  "layers": [],
+  "billable_paths": [],
+  "findings": [],
+  "unknowns": [],
+  "rule_disposition": [],
+  "next_actions": []
+}
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var L = {
+    "zh": {
+      readonly:"只读审计", compact:"精简版", full:"完整版", version:"Skill 版本",
+      summary:"给非程序员的摘要", scope:"审计范围与证据", layers:"四层覆盖",
+      paths:"付费路径清单", findings:"优先发现", unknowns:"待验证项", rules:"规则判定", next:"下一步",
+      pass:"通过", gap:"缺口", unknown:"待验证", na:"不适用", gapRules:"缺口规则：",
+      sev:{critical:"严重", high:"高", medium:"中", low:"低"},
+      where:"位置", why:"为什么花钱", fix:"怎么修", rulesLbl:"规则：",
+      more:"展开技术细节", chain:"执行链", controls:"现有控制", minfix:"最小修复", accept:"验收证据",
+      evidence:"证据等级", verdict:"判定",
+      item:"事项", need:"需要的证据", rule:"规则", reason:"说明",
+      noFindings:"没有已确认的问题。", none:"无",
+      foot:"这是一份只读审计报告，不修改项目，也不是账单封顶。没有查出问题，不代表不会产生意外费用。",
+      gen:"由 audit-cloudflare-costs 生成", bad:"报告数据无法解析，请检查 report-data 中的 JSON。"
+    },
+    "en": {
+      readonly:"Read-only audit", compact:"Compact", full:"Full", version:"Skill version",
+      summary:"Plain-language summary", scope:"Scope and evidence", layers:"Four-layer coverage",
+      paths:"Billable-path inventory", findings:"Prioritized findings", unknowns:"Unknowns and missing evidence",
+      rules:"Rule disposition", next:"Next actions",
+      pass:"PASS", gap:"GAP", unknown:"UNKNOWN", na:"N/A", gapRules:"Gap rules: ",
+      sev:{critical:"Critical", high:"High", medium:"Medium", low:"Low"},
+      where:"Location", why:"Why it costs", fix:"How to fix", rulesLbl:"Rules: ",
+      more:"Technical details", chain:"Execution chain", controls:"Existing controls", minfix:"Minimum fix", accept:"Acceptance evidence",
+      evidence:"Evidence level", verdict:"Verdict",
+      item:"Item", need:"Evidence needed", rule:"Rule", reason:"Reason",
+      noFindings:"No established findings.", none:"none",
+      foot:"Read-only audit report. It changes nothing and is not a spending cap. No findings does not mean no unexpected charges.",
+      gen:"Generated by audit-cloudflare-costs", bad:"Report data could not be parsed. Check the JSON in report-data."
+    }
+  };
+  var SEV_VAR = {critical:"--sev-critical", high:"--sev-high", medium:"--sev-medium", low:"--sev-low"};
+  var V_VAR = {PASS:"--pass", GAP:"--gap", UNKNOWN:"--unknown", NOT_APPLICABLE:"--na"};
+  var app = document.getElementById("app");
+
+  function el(tag, attrs, kids){
+    var n = document.createElement(tag);
+    if (attrs) for (var k in attrs){
+      if (k === "class") n.className = attrs[k];
+      else if (k === "style") n.setAttribute("style", attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function(c){
+      if (c == null || c === "") return;
+      n.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
+    });
+    return n;
+  }
+  function arr(x){ return Array.isArray(x) ? x : (x == null || x === "" ? [] : [x]); }
+  function str(x){ return x == null ? "" : String(x); }
+  function safeUrl(u){ u = str(u).trim(); return /^https?:\/\//i.test(u) ? u : null; }
+  function section(n, title, body){
+    return el("section", null, [el("div", {class:"sec-h"}, [el("span", {class:"n"}, [String(n).padStart(2,"0")]), el("h2", null, [title])]), body]);
+  }
+  function sevKey(s){
+    s = str(s).toLowerCase();
+    if (/crit|严重/.test(s)) return "critical";
+    if (/high|高/.test(s)) return "high";
+    if (/med|中/.test(s)) return "medium";
+    if (/low|低/.test(s)) return "low";
+    return "medium";
+  }
+  function verdictKey(v){
+    v = str(v).toUpperCase();
+    if (/NOT_APPLICABLE|N\/A|不适用/.test(v)) return "NOT_APPLICABLE";
+    if (/PASS|通过/.test(v)) return "PASS";
+    if (/GAP|缺口/.test(v)) return "GAP";
+    return "UNKNOWN";
+  }
+  function vLabel(t, k){ return {PASS:t.pass, GAP:t.gap, UNKNOWN:t.unknown, NOT_APPLICABLE:t.na}[k]; }
+
+  var data;
+  try { data = JSON.parse(document.getElementById("report-data").textContent); }
+  catch(e){ app.appendChild(el("div", {class:"err"}, [L.zh.bad + "\n" + L.en.bad + "\n\n" + e.message])); return; }
+
+  var lang = /^en/i.test(str(data.lang)) ? "en" : "zh";
+  var t = L[lang];
+  document.documentElement.lang = data.lang || (lang === "en" ? "en" : "zh-CN");
+  document.title = str(data.title || "Cloudflare 费用风险审计") + (data.project ? " · " + data.project : "");
+
+  /* hero */
+  var chips = [el("span", {class:"chip ro"}, [t.readonly])];
+  if (data.audit_date) chips.push(el("span", {class:"chip"}, [str(data.audit_date) + (data.timezone ? " · " + data.timezone : "")]));
+  if (data.environment) chips.push(el("span", {class:"chip"}, [str(data.environment)]));
+  chips.push(el("span", {class:"chip"}, [data.mode === "full" ? t.full : t.compact]));
+  if (data.skill_version) chips.push(el("span", {class:"chip"}, [t.version + " " + data.skill_version]));
+  app.appendChild(el("header", {class:"hero"}, [
+    el("div", {class:"kicker"}, [str(data.title || "Cloudflare 费用风险审计")]),
+    el("h1", null, [str(data.project || "")]),
+    el("div", {class:"chips"}, chips)
+  ]));
+
+  /* 1 summary + severity counts */
+  var findings = arr(data.findings);
+  var counts = {critical:0, high:0, medium:0, low:0};
+  findings.forEach(function(f){ counts[sevKey(f.severity)]++; });
+  var sevPills = ["critical","high","medium","low"].filter(function(k){ return counts[k] > 0; }).map(function(k){
+    return el("span", {class:"sevpill"}, [el("span", {class:"dot", style:"background:var(" + SEV_VAR[k] + ")"}), t.sev[k] + " " + counts[k]]);
+  });
+  app.appendChild(el("div", {class:"summary"}, [
+    el("h2", null, ["01 · " + t.summary]),
+    el("ol", null, arr(data.summary).map(function(s){ return el("li", null, [str(s)]); })),
+    sevPills.length ? el("div", {class:"sevbar"}, sevPills) : null
+  ]));
+
+  /* 2 scope */
+  var scope = arr(data.scope);
+  app.appendChild(section(2, t.scope, el("div", {class:"card"}, [
+    scope.length ? el("ul", {class:"lines"}, scope.map(function(s){ return el("li", null, [str(s)]); })) : el("p", {class:"empty"}, [t.none])
+  ])));
+
+  /* 3 layers */
+  var layers = arr(data.layers);
+  app.appendChild(section(3, t.layers, el("div", {class:"layers"}, layers.map(function(ly, i){
+    var p = +ly.pass || 0, g = +ly.gap || 0, u = +ly.unknown || 0, n = +ly.not_applicable || 0, tot = p + g + u + n || 1;
+    function seg(v, c){ return v ? el("span", {style:"width:" + (v / tot * 100) + "%;background:var(" + c + ")"}) : null; }
+    var gr = arr(ly.gap_rules);
+    return el("div", {class:"layer"}, [
+      el("div", {class:"ln"}, [el("span", {class:"num"}, [String(i + 1)]), str(ly.name)]),
+      el("p", null, [str(ly.conclusion)]),
+      el("div", {class:"bar"}, [seg(g,"--gap"), seg(u,"--unknown"), seg(p,"--pass"), seg(n,"--na")]),
+      el("div", {class:"counts"}, [
+        el("span", null, [el("span", {class:"dot", style:"background:var(--gap)"}), " " + t.gap + " ", el("b", null, [String(g)])]),
+        el("span", null, [el("span", {class:"dot", style:"background:var(--unknown)"}), " " + t.unknown + " ", el("b", null, [String(u)])]),
+        el("span", null, [el("span", {class:"dot", style:"background:var(--pass)"}), " " + t.pass + " ", el("b", null, [String(p)])]),
+        el("span", null, [el("span", {class:"dot", style:"background:var(--na)"}), " " + t.na + " ", el("b", null, [String(n)])])
+      ]),
+      gr.length ? el("div", {class:"gaprules mono"}, [t.gapRules + gr.join(", ")]) : null
+    ]);
+  }))));
+
+  /* 4 billable paths */
+  var paths = arr(data.billable_paths);
+  app.appendChild(section(4, t.paths, el("div", {class:"card"}, paths.length ? paths.map(function(pth){
+    var text = typeof pth === "string" ? pth : str(pth.text || pth.path);
+    var st = typeof pth === "string" ? null : verdictKey(pth.status);
+    return el("div", {class:"path"}, [
+      st ? el("span", {class:"tag", style:"background:var(" + V_VAR[st] + ")"}, [vLabel(t, st)]) : el("span", {class:"dot", style:"margin-top:9px;background:var(--accent)"}),
+      el("span", null, [text])
+    ]);
+  }) : [el("p", {class:"empty"}, [t.none])])));
+
+  /* 5 findings */
+  app.appendChild(section(5, t.findings, findings.length ? el("div", null, findings.map(function(f){
+    var sk = sevKey(f.severity);
+    var locs = arr(f.evidence_locations || f.location);
+    var rows = [];
+    if (locs.length) rows.push(el("div", {class:"row"}, [el("div", {class:"k"}, [t.where]), el("div", {class:"v"}, locs.map(function(l){ return el("span", {class:"loc"}, [str(l)]); }))]));
+    if (f.why) rows.push(el("div", {class:"row"}, [el("div", {class:"k"}, [t.why]), el("div", {class:"v"}, [str(f.why)])]));
+    if (f.fix) rows.push(el("div", {class:"row"}, [el("div", {class:"k"}, [t.fix]), el("div", {class:"v"}, [str(f.fix)])]));
+    var extra = [["evidence_levels", t.evidence], ["execution_chain", t.chain], ["existing_controls", t.controls], ["minimum_fix", t.minfix], ["acceptance_evidence", t.accept]]
+      .filter(function(p){ return arr(f[p[0]]).length; })
+      .map(function(p){ return el("div", {class:"row"}, [el("div", {class:"k"}, [p[1]]), el("div", {class:"v"}, [arr(f[p[0]]).map(str).join("；")])]); });
+    var foot = [];
+    var rids = arr(f.rule_ids);
+    if (rids.length) foot.push(el("span", {class:"mono"}, [t.rulesLbl + rids.join("、")]));
+    arr(f.links).forEach(function(lk){
+      var u = safeUrl(lk && lk.url);
+      if (u) foot.push(el("a", {href:u, target:"_blank", rel:"noopener noreferrer"}, [str(lk.label || u)]));
+    });
+    return el("article", {class:"finding", style:"--sev:var(" + SEV_VAR[sk] + ")"}, [
+      el("div", {class:"f-top"}, [el("span", {class:"fid"}, [str(f.id)]), el("span", {class:"sev"}, [t.sev[sk]])].concat(arr(f.layers).map(function(x){ return el("span", {class:"lay"}, [str(x)]); }))),
+      el("h3", null, [str(f.title)]),
+      el("div", null, rows),
+      extra.length ? el("details", null, [el("summary", null, [t.more])].concat(extra)) : null,
+      foot.length ? el("div", {class:"f-foot"}, foot) : null
+    ]);
+  })) : el("div", {class:"card"}, [el("p", {class:"empty"}, [t.noFindings])])));
+
+  /* 6 unknowns */
+  var unk = arr(data.unknowns);
+  app.appendChild(section(6, t.unknowns, el("div", {class:"card"}, [
+    unk.length ? el("table", null, [
+      el("thead", null, [el("tr", null, [el("th", null, [t.item]), el("th", null, [t.need])])]),
+      el("tbody", null, unk.map(function(u){
+        return typeof u === "string" ? el("tr", null, [el("td", {colspan:"2"}, [u])])
+          : el("tr", null, [el("td", null, [str(u.item)]), el("td", null, [str(u.evidence_needed)])]);
+      }))
+    ]) : el("p", {class:"empty"}, [t.none])
+  ])));
+
+  /* 7 rule disposition */
+  var rd = arr(data.rule_disposition);
+  var rdBody = [el("ul", {class:"lines"}, layers.map(function(ly){
+    var gr = arr(ly.gap_rules);
+    return el("li", null, [el("b", null, [str(ly.name)]), "　" + t.pass + " " + (+ly.pass||0) + " / " + t.gap + " " + (+ly.gap||0) + " / " + t.unknown + " " + (+ly.unknown||0) + " / " + t.na + " " + (+ly.not_applicable||0) + (gr.length ? "　" + t.gapRules + gr.join("、") : "")]);
+  }))];
+  if (rd.length) rdBody.push(el("details", null, [el("summary", null, [t.rules + " · " + rd.length]), el("table", null, [
+    el("thead", null, [el("tr", null, [el("th", null, [t.rule]), el("th", null, [t.verdict]), el("th", null, [t.reason])])]),
+    el("tbody", null, rd.map(function(r){
+      var vk = verdictKey(r.verdict);
+      return el("tr", null, [el("td", {class:"mono"}, [str(r.rule_id)]), el("td", null, [el("span", {class:"verdict", style:"background:var(" + V_VAR[vk] + ")"}, [vLabel(t, vk)])]), el("td", null, [str(r.reason)])]);
+    }))
+  ])]));
+  app.appendChild(section(7, t.rules, el("div", {class:"card"}, rdBody)));
+
+  /* 8 next actions */
+  var nx = arr(data.next_actions);
+  app.appendChild(section(8, t.next, el("div", {class:"card"}, [
+    nx.length ? el("ol", {class:"next"}, nx.map(function(s){ return el("li", null, [str(s)]); })) : el("p", {class:"empty"}, [t.none])
+  ])));
+
+  app.appendChild(el("footer", null, [
+    el("strong", null, [t.foot]), el("br"),
+    t.gen + (data.skill_version ? " v" + data.skill_version : "") + " · ",
+    el("a", {href:"https://github.com/davezfr/audit-cloudflare-costs", target:"_blank", rel:"noopener noreferrer"}, ["github.com/davezfr/audit-cloudflare-costs"])
+  ]));
+})();
+</script>
+</body>
+</html>

@@ -6,7 +6,8 @@ description: >-
   reviews, and audits of Workers, Pages, D1, KV, Durable Objects, Queues, R2, or
   paid APIs. Check four layers: billing alerts, code limits, automatic pause,
   and existing or planned personal-agent delegation. Produce an evidence-based
-  read-only Markdown report, concise by default, with a full report on request;
+  read-only Markdown report, concise by default, with a full report or a
+  self-contained HTML report on request;
   do not implement fixes or operate a kill switch.
   Also trigger for Cloudflare 账单爆表、费用风险审计、账单提醒、代码限制、
   自动暂停和 Agent 接管检查.
@@ -14,7 +15,7 @@ description: >-
 
 # Audit Cloudflare Costs
 
-Version: 0.2.1. Provider-reference baseline: 2026-10-07.
+Version: 0.3.0. Provider-reference baseline: 2026-10-07.
 
 Inspect the actual project and report whether paid work is discoverable, bounded,
 and stoppable. Cover all four protection layers.
@@ -67,6 +68,7 @@ Then read each layer checklist to determine applicability; expand only used prod
 | [execution-limits.md](references/execution-limits.md) | Paid paths, quotas, retries, idempotency, background work and storage |
 | [pause-readiness.md](references/pause-readiness.md) | Existing detection, concrete stop actions, verification and recovery |
 | [agent-delegation.md](references/agent-delegation.md) | Existing/planned agent triggers, restricted tools, credentials, untrusted alerts, reports and historical end-to-end evidence |
+| [html-report.md](references/html-report.md) | Only when the user asks for an HTML/web/visual report: template use, data schema and checks |
 
 Use stable L1/L2/L3/L4 rule IDs in coverage and findings. Keep the references with
 SKILL.md when installing the skill in another compatible agent.
@@ -214,6 +216,8 @@ Show the selected report directly in chat unless the user requested file-only ou
 When saving a single requested report, use `cloudflare-cost-audit-YYYY-MM-DD.md`.
 When both versions are saved, use that name for compact and append `-full` before
 `.md` for full. Use the stated audit date/timezone, follow the host's file-saving
-rules, and honor explicitly requested filenames. Version 0.2.1 emits Markdown only;
-the stable report schema remains reserved for a future template. Stop after reporting.
+rules, and honor explicitly requested filenames. When the user asks for an HTML, web
+or visual report, follow [html-report.md](references/html-report.md): fill the bundled
+template with the same report data and save `cloudflare-cost-audit-YYYY-MM-DD.html`.
+Markdown stays the default. Stop after reporting.
 Do not implement, deploy a watchdog, or keep monitoring automatically.
