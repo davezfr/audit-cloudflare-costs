@@ -1,0 +1,15 @@
+{
+  "evidence_label": "SYNTHETIC_SCENARIO_CONFIGURATION_NOT_CLOUD_EXPORT",
+  "account_id": "DEMO_ACCOUNT_ID_DO_NOT_USE",
+  "bucket_name": "DEMO_R2_BUCKET_DO_NOT_USE",
+  "rules": [
+    {
+      "rule_id": "DEMO_NOTIFICATION_RULE_ID_DO_NOT_USE",
+      "event_type": "object-create",
+      "prefix": "incoming/",
+      "suffix": ".json",
+      "queue_name": "DEMO_R2_EVENTS_QUEUE_DO_NOT_USE"
+    }
+  ],
+  "note": "Describes the fictional subscription to analyze. Not a deployable API request or evidence of a deployed notification."
+}

@@ -1,0 +1,29 @@
+{
+  "status": "PLANNED_NOT_CONNECTED",
+  "evidence_level": "SOURCE",
+  "entry_point": "adapter.js:handleDeliveredSignal",
+  "public_webhook_registered": false,
+  "project_id": "DEMO_PROJECT_ID_DO_NOT_USE",
+  "account_id": "DEMO_ACCOUNT_ID_DO_NOT_USE",
+  "app_origin": "https://worker.example.invalid",
+  "agent_endpoint": "https://agent.example.invalid/v1/decision",
+  "cloudflare_token": {
+    "value": "DEMO_BROAD_CLOUDFLARE_TOKEN_DO_NOT_USE",
+    "intended_resource_scope": "ALL_ACCESSIBLE_ACCOUNTS",
+    "intended_permissions": ["Workers Scripts Write", "Workers KV Storage Write", "Workers R2 Storage Write", "Queues Write"],
+    "note": "Fictional planned permissions; no token exists and no actual provider scope has been read."
+  },
+  "app_ops_token": "DEMO_APP_OPS_TOKEN_DO_NOT_USE",
+  "maximum_agent_calls_per_utc_day": 20,
+  "maximum_agent_input_characters": 1200,
+  "maximum_agent_output_tokens": 256,
+  "maximum_agent_selected_tools_per_decision": 1,
+  "tool_names": ["query_project_state", "pause_project", "resume_project"],
+  "host_contract": {
+    "signal": "A bounded authenticated and scope-validated signal supplied by a future host; alertText remains externally supplied text.",
+    "state": "A durable transactional storage adapter with Cloudflare DO storage semantics; the host is not wired in this fixture.",
+    "agent": "A provider-neutral single-call interface that honors endpoint, timeout, tool schema, and output token bound; no real SDK or account is configured.",
+    "transport": "Injected fetch-compatible transport; all configured destinations are .example.invalid.",
+    "records": "The adapter stores the last 20 minimal decisions; no customer payloads or raw prompts are recorded."
+  }
+}

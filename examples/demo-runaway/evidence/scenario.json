@@ -1,0 +1,26 @@
+{
+  "evidence_label": "SYNTHETIC_SCENARIO_NOT_RUNTIME_EVIDENCE",
+  "project_id": "DEMO_PROJECT_ID_DO_NOT_USE",
+  "environment": "FICTIONAL_SOURCE_REVIEW_ONLY",
+  "account_id": "DEMO_ACCOUNT_ID_DO_NOT_USE",
+  "provider_plan": "UNKNOWN",
+  "budget_amount": "UNKNOWN",
+  "currency": "UNKNOWN",
+  "deployed_revision": "UNKNOWN",
+  "usage_and_billing": "UNKNOWN",
+  "alert_delivery": "UNKNOWN",
+  "pause_or_recovery_e2e": "UNKNOWN",
+  "agent_status": "PLANNED_NOT_CONNECTED",
+  "intended_report_behavior": "A one-shot report attempts an R2 read and bounded summary write, with at most three application attempts. Missing input is a possible transient failure.",
+  "intended_object_behavior": "The scheduled producer writes one bounded input; a notification consumer writes its small processing result.",
+  "initial_state": "No active state is supplied. A fictional authorized owner must explicitly initialize admission through the recovery procedure before work is reachable.",
+  "fixed_r2_keys": [
+    "reports/DEMO_INPUT.json",
+    "reports/DEMO_RESULT.json",
+    "incoming/DEMO_INPUT.json",
+    "incoming/DEMO_RESULT.json"
+  ],
+  "input_provisioning": "The report input is assumed to be a previously supplied small synthetic object; the fixture includes no upload route or network action.",
+  "work_allowance": "100 R2-operation admission units per UTC day across the project; source policy only, not currency or plan proof.",
+  "existing_execution_records": []
+}

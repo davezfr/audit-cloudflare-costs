@@ -1,0 +1,8 @@
+# SYNTHETIC / SIMULATED historical configuration fragment.
+# Invented for this exercise; not a deployment export or a successful release log.
+# The fictional operator describes this as the configuration preceding wrangler.toml.
+name = "DEMO_WORKER_NAME_DO_NOT_USE"
+account_id = "DEMO_ACCOUNT_ID_DO_NOT_USE"
+
+[triggers]
+crons = ["*/5 * * * *"]

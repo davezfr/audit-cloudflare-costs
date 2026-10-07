@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synthetic report status</title>
+<main>
+  <h1>Synthetic report status</h1>
+  <p>Source audit fixture. This page has no running backend.</p>
+  <form id="watch">
+    <label>Operator session token <input id="token" type="password" autocomplete="off" required></label>
+    <button type="submit">View report status</button>
+  </form>
+  <p id="status" aria-live="polite">No session</p>
+  <button id="stop" type="button">Stop viewing</button>
+</main>
+<script type="module" src="./status.js"></script>
+</html>

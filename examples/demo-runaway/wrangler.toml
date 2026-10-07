@@ -1,0 +1,52 @@
+# SYNTHETIC SOURCE ONLY. Invalid identifiers intentionally prevent deployment.
+name = "DEMO_WORKER_NAME_DO_NOT_USE"
+account_id = "DEMO_ACCOUNT_ID_DO_NOT_USE"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+preview_urls = false
+
+[limits]
+cpu_ms = 50
+
+[assets]
+directory = "./web"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/ops/*"]
+
+[vars]
+PROJECT_ID = "DEMO_PROJECT_ID_DO_NOT_USE"
+R2_BUCKET_NAME = "DEMO_R2_BUCKET_DO_NOT_USE"
+DAILY_WORK_UNITS = "100"
+# APP_BEARER and OPS_BEARER would be secrets. No values are supplied.
+
+[[kv_namespaces]]
+binding = "QUOTA"
+id = "DEMO_KV_NAMESPACE_ID_DO_NOT_USE"
+
+[[r2_buckets]]
+binding = "ARTIFACTS"
+bucket_name = "DEMO_R2_BUCKET_DO_NOT_USE"
+
+[[durable_objects.bindings]]
+name = "CONTROL"
+class_name = "ProjectControl"
+
+[[durable_objects.bindings]]
+name = "REPORT_JOB"
+class_name = "ReportJob"
+
+[[migrations]]
+tag = "DEMO_MIGRATION_DO_NOT_USE"
+new_sqlite_classes = ["ProjectControl", "ReportJob"]
+
+[[queues.consumers]]
+queue = "DEMO_R2_EVENTS_QUEUE_DO_NOT_USE"
+max_batch_size = 1
+max_concurrency = 1
+max_retries = 2
+dead_letter_queue = "DEMO_R2_EVENTS_DLQ_DO_NOT_USE"
+
+# Scheduled producer state used by the current pause procedure:
+# [triggers]
+# crons = ["*/5 * * * *"]
