@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloudflare 费用风险审计</title>
+<!--
+  audit-cloudflare-costs HTML report template (schema: audit-cloudflare-costs/report@1)
+  Fill this file by replacing ONLY the JSON inside <script id="report-data">.
+  Escape every "<" inside JSON strings as <. Do not edit the markup, styles or script.
+  Self-contained: no network requests, no external fonts or scripts.
+-->
+<style>
+:root{
+  --bg:#fbf6ee; --paper:#fffdf9; --ink:#14213d; --ink-2:#4a5470; --muted:#8a90a2;
+  --line:#ece3d4; --accent:#f26b1d; --accent-soft:#fde8da;
+  --sev-critical:#b42318; --sev-high:#e8590c; --sev-medium:#c98a04; --sev-low:#5c7cfa;
+  --pass:#2f9e44; --gap:#e8590c; --unknown:#9aa0ae; --na:#d6d1c7;
+  --code-bg:#f4ede1; --shadow:0 1px 2px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11141b; --paper:#191d27; --ink:#eef0f5; --ink-2:#b9bfcd; --muted:#868d9e;
+    --line:#2a3040; --accent:#ff8a3d; --accent-soft:#3a2416;
+    --sev-critical:#ff6b5e; --sev-high:#ff8a3d; --sev-medium:#f2c14e; --sev-low:#8fa8ff;
+    --pass:#5fd07a; --gap:#ff8a3d; --unknown:#7d8496; --na:#3a4052;
+    --code-bg:#222838; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei","Segoe UI",sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:40px 20px 64px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+a{color:var(--accent)}
+/* header */
+.hero{position:relative;background:var(--paper);border-radius:20px;padding:28px 28px 24px;box-shadow:var(--shadow);overflow:hidden}
+.hero:before{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:var(--accent-soft)}
+.kicker{position:relative;display:flex;align-items:center;gap:10px;color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.02em}
+.kicker:before{content:"";width:22px;height:3px;border-radius:2px;background:var(--accent)}
+h1{position:relative;margin:10px 0 14px;font-size:30px;line-height:1.25;letter-spacing:-.01em;word-break:break-word}
+.chips{position:relative;display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.chip.ro{background:var(--accent-soft);border-color:transparent;color:var(--accent);font-weight:600}
+/* summary */
+.summary{margin-top:18px;background:var(--ink);color:#fff;border-radius:18px;padding:22px 24px;box-shadow:var(--shadow)}
+@media (prefers-color-scheme: dark){.summary{background:#252c3d}}
+.summary h2{margin:0 0 10px;font-size:15px;color:#ffd2b5;font-weight:700}
+.summary ol{margin:0;padding:0;list-style:none;counter-reset:s}
+.summary li{position:relative;padding:5px 0 5px 30px;font-size:17px;line-height:1.6}
+.summary li:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:8px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sevbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.sevpill{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.1);color:#fff}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+/* sections */
+section{margin-top:34px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 14px}
+.sec-h .n{font-size:13px;font-weight:700;color:var(--accent);font-family:ui-monospace,Menlo,monospace}
+.sec-h h2{margin:0;font-size:21px}
+.card{background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px}
+.lines{margin:0;padding:0;list-style:none}
+.lines li{padding:7px 0;border-bottom:1px dashed var(--line);color:var(--ink-2)}
+.lines li:last-child{border-bottom:0}
+/* layers */
+.layers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.layer{background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.layer .ln{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.layer .ln .num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.layer p{margin:0;color:var(--ink-2);font-size:15px;line-height:1.6}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar span{display:block;height:100%}
+.counts{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--ink-2)}
+.counts b{color:var(--ink);font-variant-numeric:tabular-nums}
+.gaprules{font-size:12.5px;color:var(--muted)}
+/* paths */
+.path{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);color:var(--ink-2)}
+.path:last-child{border-bottom:0}
+.path .tag{flex:none;margin-top:3px;font-size:12px;padding:1px 8px;border-radius:999px;color:#fff;font-weight:600}
+/* findings */
+.finding{position:relative;background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px 16px 24px;margin-bottom:14px;overflow:hidden}
+.finding:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--sev)}
+.f-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.fid{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--muted);font-weight:700}
+.sev{font-size:12.5px;font-weight:700;color:#fff;background:var(--sev);padding:1px 9px;border-radius:999px}
+.lay{font-size:12.5px;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);padding:0 8px;border-radius:999px}
+.finding h3{margin:0 0 10px;font-size:18px;line-height:1.45}
+.row{display:grid;grid-template-columns:92px 1fr;gap:4px 12px;padding:6px 0;border-top:1px dashed var(--line);font-size:15px}
+.row .k{color:var(--muted);font-size:13.5px;padding-top:2px}
+.row .v{color:var(--ink)}
+.loc{display:inline-block;background:var(--code-bg);border-radius:6px;padding:0 6px;margin:0 4px 4px 0;font-family:ui-monospace,Menlo,monospace;font-size:13px;word-break:break-all}
+.f-foot{margin-top:8px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+details{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+summary{cursor:pointer;color:var(--accent);font-size:14px;font-weight:600}
+details .row{grid-template-columns:120px 1fr}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-size:13px;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.verdict{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;color:#fff;white-space:nowrap}
+/* next */
+.next{margin:0;padding:0;list-style:none;counter-reset:n}
+.next li{position:relative;padding:10px 0 10px 40px;border-bottom:1px dashed var(--line)}
+.next li:last-child{border-bottom:0}
+.next li:before{counter-increment:n;content:counter(n);position:absolute;left:0;top:9px;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:800;display:flex;align-items:center;justify-content:center}
+.empty{color:var(--muted);font-style:italic}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1.7}
+footer strong{color:var(--ink-2)}
+.err{background:#fff3f0;color:#b42318;border:1px solid #f4c7bd;padding:16px;border-radius:12px;font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap}
+@media (max-width:640px){
+  .wrap{padding:20px 16px 48px}
+  h1{font-size:24px}
+  .layers{grid-template-columns:1fr}
+  .row,details .row{grid-template-columns:1fr}
+  .summary li{font-size:16px}
+}
+@media print{
+  body{background:#fff}
+  .hero,.card,.layer,.finding{box-shadow:none;border:1px solid #ddd}
+  .finding{break-inside:avoid}
+  details{display:block}
+}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"></main>
+
+<script id="report-data" type="application/json">
+{
+  "schema": "audit-cloudflare-costs/report@1",
+  "lang": "zh-CN",
+  "mode": "compact",
+  "title": "Cloudflare 费用风险审计",
+  "project": "examples/demo-runaway",
+  "environment": "源码审计",
+  "audit_date": "2026-10-07",
+  "timezone": "Europe/Paris",
+  "skill_version": "0.3.0",
+  "summary": [
+    "如果按现有设计接线并开放处理，重复任务可能快速消耗额度，且每日额度不能可靠限制总处理量。",
+    "优先让结果文件不再触发再次处理，并让同时到达的请求不能重复使用额度。",
+    "保留累计重试次数，明确移除定时任务，并暂停后台页面的重复查询。",
+    "接入 Agent 前移除恢复权限与直接云端凭证，把告警文字当作数据处理。",
+    "真实套餐、账单提醒、部署状态与停止效果仍待验证。"
+  ],
+  "scope": [
+    "范围：虚构演示项目；四层覆盖包括明确计划但未连接的 Agent。配置和历史片段均为模拟材料，不证明真实部署或事故；工作入口默认关闭，需先由授权人员明确恢复。",
+    "证据：已检查全部第一方代码、web、Wrangler、通知过滤、场景文件、暂停手册及Agent计划；源码（SOURCE）层级。目录无Git仓库，分支、HEAD及变更基线不可用。",
+    "未连接Cloudflare账户，未读取应用数据；无运行指标或测试结果。官方文档于2026-10-07核对；真实订阅、资源、提醒和有效配置待验证。",
+    "预算问题按要求跳过，币种、账期及停机容忍度未知，阈值与金额估算留空。100个每日单位仅指R2操作准入，不覆盖Worker、DO、KV、Queue、存储、模型或固定费用；付费超额取决于实际套餐，免费额度耗尽也可能导致不可用。",
+    "仅生成此报告；未修改源码、安装、运行项目、调用模型、部署或执行暂停。静态文件直接交付与/API、/ops进入Worker的路径已区分；无其他环境覆写或独立应用。"
+  ],
+  "layers": [
+    {
+      "name": "第一层 账单提醒",
+      "conclusion": "账单策略和运行用量尚无证据；计划中的保护流程存在重复开销。",
+      "gap": 1,
+      "unknown": 7,
+      "not_applicable": 0,
+      "gap_rules": [
+        "L1-08"
+      ],
+      "pass": 0
+    },
+    {
+      "name": "第二层 代码限制",
+      "conclusion": "输入体积和单次操作有界，但事件循环、额度扣减和重试存在缺口。",
+      "gap": 9,
+      "unknown": 3,
+      "not_applicable": 0,
+      "gap_rules": [
+        "L2-05",
+        "L2-07",
+        "L2-08",
+        "L2-09",
+        "L2-10",
+        "L2-11",
+        "L2-12",
+        "L2-15",
+        "L2-18"
+      ],
+      "pass": 6
+    },
+    {
+      "name": "第三层 自动暂停",
+      "conclusion": "持久暂停、失败拒绝与核实流程已有源码；定时移除与恢复权限仍有缺口。",
+      "gap": 4,
+      "unknown": 4,
+      "not_applicable": 0,
+      "gap_rules": [
+        "L3-04",
+        "L3-07",
+        "L3-11",
+        "L3-13"
+      ],
+      "pass": 7
+    },
+    {
+      "name": "第四层 Agent 接管",
+      "conclusion": "计划先按固定规则暂停并限制模型次数，但恢复权限、凭证及告警处理不合要求。",
+      "gap": 8,
+      "unknown": 0,
+      "not_applicable": 0,
+      "gap_rules": [
+        "L4-02",
+        "L4-03",
+        "L4-04",
+        "L4-06",
+        "L4-07",
+        "L4-08",
+        "L4-09",
+        "L4-10"
+      ],
+      "pass": 2
+    }
+  ],
+  "billable_paths": [
+    {
+      "text": "授权开始报告 → 闹钟读取输入、写小结果并保存状态；失败重新排程会清零重试次数，工作额度扣减也非原子。",
+      "status": "GAP"
+    },
+    {
+      "text": "已有定时任务 → 控制状态与额度检查 → 写固定输入 → 对象通知 → 队列读写结果 → 新通知；成功事件反馈、重复处理与错误移除定时配置同时影响成本。",
+      "status": "GAP"
+    },
+    {
+      "text": "状态页面 → 每三秒一次API → Worker与单例DO读取；后台标签没有主动停止，终态/错误/离页可停止；静态文件本身不等于这些调用。",
+      "status": "GAP"
+    },
+    {
+      "text": "运维暂停/状态入口 → 持久控制状态与报告闹钟管理；应用入口不执行原生队列暂停或移除Cron，手册要求另行操作；线上配置和残余工作需核实。",
+      "status": "UNKNOWN"
+    },
+    {
+      "text": "未来告警 → 固定暂停 → 有限模型分析 → 指定工具 → 记录；恢复权限、凭证传递、告警重复和记录缺口需先处理，未接线。",
+      "status": "GAP"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-01",
+      "title": "处理结果会被再次处理，成功也可能持续产生调用费",
+      "severity": "high",
+      "layers": [
+        "第二层 代码限制"
+      ],
+      "rule_ids": [
+        "L2-12"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "src/r2-consumer.js:4-5,37-41",
+        "config/r2-notifications.synthetic.json:8-11"
+      ],
+      "why": "结果仍写入被监听的 incoming/ 目录，且结果名也在允许处理的名单内。覆盖写入会产生新通知；每条消息的两次重试限制挡不住新的成功消息。暂停与每日额度仍能抑制处理，但额度本身有漏洞。",
+      "fix": "将结果移出监听目录，并让处理程序拒绝结果文件。",
+      "links": [
+        {
+          "label": "R2 创建事件与覆盖写入",
+          "url": "https://developers.cloudflare.com/r2/buckets/event-notifications/"
+        }
+      ]
+    },
+    {
+      "id": "F-02",
+      "title": "同时处理时，每日额度可能被重复使用",
+      "severity": "high",
+      "layers": [
+        "第二层 代码限制"
+      ],
+      "rule_ids": [
+        "L2-05",
+        "L2-07"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "src/quota.js:8-14",
+        "src/worker.js:43-47",
+        "src/export-job.js:61",
+        "src/r2-consumer.js:23"
+      ],
+      "why": "先读取旧额度再写回，两个调用可同时看到同一份余额并获准处理。队列并发为一也不能串行化报告和定时任务；每日 100 单位因此不是可靠上限。",
+      "fix": "让所有处理入口通过同一个可原子扣减额度的控制点，扣完额度才开始处理。",
+      "links": [
+        {
+          "label": "KV 一致性与事务限制",
+          "url": "https://developers.cloudflare.com/kv/concepts/how-kv-works/"
+        }
+      ]
+    },
+    {
+      "id": "F-03",
+      "title": "Agent 可以把刚暂停的处理入口重新开放",
+      "severity": "high",
+      "layers": [
+        "第四层 Agent 接管",
+        "第三层 自动暂停"
+      ],
+      "rule_ids": [
+        "L4-02",
+        "L4-06",
+        "L3-13"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "planned-agent/adapter.js:5-8,55-65,87-94",
+        "src/worker.js:33-35",
+        "ops/pause-runbook.md:47-55"
+      ],
+      "why": "计划把恢复操作交给模型。即使固定规则刚暂停，下一次模型选择仍可重新开放入口，绕过要求人工决定的恢复流程；这不自动重启报告或恢复队列，但新任务可再被接受。",
+      "fix": "从 Agent 工具中移除恢复操作，只保留查询和指定范围的暂停；恢复由人工独立执行。",
+      "links": []
+    },
+    {
+      "id": "F-04",
+      "title": "计划把权限过大的云端凭证交给 Agent",
+      "severity": "high",
+      "layers": [
+        "第四层 Agent 接管",
+        "第三层 自动暂停"
+      ],
+      "rule_ids": [
+        "L4-03",
+        "L4-09",
+        "L3-11"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "planned-agent/plan.json:10-14",
+        "planned-agent/adapter.js:72-81"
+      ],
+      "why": "设计把直接云端凭证放入模型指令，范围设为所有可访问账户，并包括可删除 Worker 的写权限。若按此接线，模型平台会收到超出指定项目暂停所需的权限。",
+      "fix": "凭证仅留在执行服务内，缩小到账户和资源；对 Agent 只开放服务端校验的指定项目查询与暂停。",
+      "links": [
+        {
+          "label": "删除 Worker 接口接受的权限",
+          "url": "https://developers.cloudflare.com/api/resources/workers/subresources/scripts/methods/delete/"
+        }
+      ]
+    },
+    {
+      "id": "F-05",
+      "title": "同一报告失败后会反复尝试，超过约定的三次",
+      "severity": "medium",
+      "layers": [
+        "第二层 代码限制"
+      ],
+      "rule_ids": [
+        "L2-08",
+        "L2-10"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "src/export-job.js:48-54,75-81"
+      ],
+      "why": "失败时虽加一，但再次排程时把次数写回零。输入持续缺失时，每次都像首次失败，反复读对象和保存状态；暂停或额度不足仍会终止，不能据此声称无限收费。",
+      "fix": "重新排程时保留累计次数，第三次失败后保存终态，不再设置下一次闹钟。",
+      "links": [
+        {
+          "label": "DO 闹钟与重试语义",
+          "url": "https://developers.cloudflare.com/durable-objects/api/alarms/"
+        }
+      ]
+    },
+    {
+      "id": "F-06",
+      "title": "同一条对象通知再次到达，会再次读写收费",
+      "severity": "medium",
+      "layers": [
+        "第二层 代码限制"
+      ],
+      "rule_ids": [
+        "L2-09",
+        "L2-11"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "src/r2-consumer.js:12-14,23-41",
+        "wrangler.toml:43-48"
+      ],
+      "why": "版本标记只被写进结果，没有判断是否处理过。同一通知重投或写成功后未确认，都可能再扣额度并读写。原生重试有限且并发为一，限制了单条失败的影响。",
+      "fix": "按对象及版本保存处理状态，重复通知直接复用已完成结果；写入结果不确定时先核实再重试。",
+      "links": [
+        {
+          "label": "Queue 重试与确认",
+          "url": "https://developers.cloudflare.com/queues/configuration/batching-retries/"
+        }
+      ]
+    },
+    {
+      "id": "F-07",
+      "title": "注释定时配置后，既有定时任务仍可能保留",
+      "severity": "medium",
+      "layers": [
+        "第三层 自动暂停"
+      ],
+      "rule_ids": [
+        "L3-07"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "ops/pause-runbook.md:25-31",
+        "wrangler.toml:50-52",
+        "evidence/last-applied-wrangler.synthetic.toml:7-8"
+      ],
+      "why": "暂停手册要求注释配置，但 Wrangler 对未声明的定时设置保留已有任务。若先前任务存在，仍会唤醒程序并读取控制状态；持久暂停能挡住对象写入，仍有唤醒和读取成本。",
+      "fix": "停止方案应明确设置空定时列表，由授权发布流程应用，并核对云端列表确实为空。",
+      "links": [
+        {
+          "label": "Cron 移除规则",
+          "url": "https://developers.cloudflare.com/workers/configuration/cron-triggers/"
+        }
+      ]
+    },
+    {
+      "id": "F-08",
+      "title": "外部告警文字进入高优先级指令，可能误导处置",
+      "severity": "medium",
+      "layers": [
+        "第四层 Agent 接管"
+      ],
+      "rule_ids": [
+        "L4-04"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "planned-agent/adapter.js:39-42,72-78,87-91"
+      ],
+      "why": "告警文字直接拼入模型指令，外部文字可伪装成操作要求。固定目标和工具名单限制了范围，但不能保证模型按原有规则选择操作。",
+      "fix": "将告警作为独立的数据字段传入，操作选择由服务端规则验证；已触发暂停时禁止任何重新开放动作。",
+      "links": []
+    },
+    {
+      "id": "F-09",
+      "title": "重复告警会重复处理，并可能耗完当天的分析次数",
+      "severity": "medium",
+      "layers": [
+        "第四层 Agent 接管",
+        "第一层 账单提醒",
+        "第二层 代码限制",
+        "第三层 自动暂停"
+      ],
+      "rule_ids": [
+        "L4-07",
+        "L1-08",
+        "L2-18",
+        "L3-04"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "planned-agent/adapter.js:21-35,55-70,99-100",
+        "planned-agent/plan.json:17-27"
+      ],
+      "why": "没有告警编号或重复判断，同一事件每次送达都可能再调用模型。每天最多 20 次限制了分析量，但暂停请求和记录写入在该限额之外，重复通知仍可继续触发这些操作。",
+      "fix": "给告警保存稳定编号，重复事件复用已有处置；为暂停、写记录及分析一起设置独立的频率和总量限制。",
+      "links": []
+    },
+    {
+      "id": "F-10",
+      "title": "后台标签页仍会重复查询状态",
+      "severity": "low",
+      "layers": [
+        "第二层 代码限制"
+      ],
+      "rule_ids": [
+        "L2-15"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "web/status.js:13-46",
+        "src/worker.js:24-25",
+        "src/export-job.js:18-21"
+      ],
+      "why": "页面每三秒查询一次，切到后台时没有停止逻辑；正常收到运行中状态仍继续调用。完成、三次错误、手动停止及离页会结束，且需操作令牌，影响比公开无限查询小。",
+      "fix": "标签页隐藏时停止查询，回来后由用户恢复，或逐渐降低频率；保留现有终态与错误停止。",
+      "links": [
+        {
+          "label": "静态文件和 Worker 请求计费区别",
+          "url": "https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/"
+        }
+      ]
+    },
+    {
+      "id": "F-11",
+      "title": "处置记录无法逐条对应告警，也缺少判断费用的用量",
+      "severity": "low",
+      "layers": [
+        "第四层 Agent 接管"
+      ],
+      "rule_ids": [
+        "L4-08",
+        "L4-10"
+      ],
+      "verdict": "GAP",
+      "evidence_locations": [
+        "planned-agent/adapter.js:32-35,45-53,90-100"
+      ],
+      "why": "记录只有时间、项目、动作结果和部分状态，没有告警编号、用量窗口或动作关联编号。重复处置与费用变化难以核对；记录诚实保留“是否止费待验证”，没有伪称已全部停止。",
+      "fix": "记录告警和动作编号、用量及最新统计时间，把动作请求、状态核实和剩余任务分别列出。",
+      "links": []
+    }
+  ],
+  "unknowns": [
+    {
+      "item": "真实套餐、计费范围与部署入口",
+      "evidence_needed": "所选账户的订阅、绑定、路由、Cron、通知过滤、队列及当前版本的只读配置摘要。"
+    },
+    {
+      "item": "账单提醒与最新用量",
+      "evidence_needed": "已启用的提醒策略及目的地验证/收悉记录；有窗口、单位和最新时间戳的所选资源用量摘要。"
+    },
+    {
+      "item": "暂停与恢复是否按预期生效",
+      "evidence_needed": "已有隔离验证或历史记录，包含关闭入口、无未来闹钟、空Cron、暂停原生队列、残余任务与后续计数。"
+    },
+    {
+      "item": "未来检测与执行服务的真实边界",
+      "evidence_needed": "未来host的认证、告警判据、数据时效、故障策略、持久状态一致性和实际权限元数据，无需提供令牌值。"
+    },
+    {
+      "item": "模型费用与处置完整性",
+      "evidence_needed": "实际提供商计价及接口边界、重复/恶意告警验收和关联处置样例；当前无完整历史端到端证据。"
+    }
+  ],
+  "rule_disposition": [],
+  "next_actions": [
+    "先阻断结果触发新处理，并加入按对象版本的重复处理保护；隔离验收应看到同一份输入不产生反馈链或重复读写。",
+    "让所有处理入口原子扣减同一份额度，保留根任务累计次数；最后一份额度只允许一项处理，报告第三次失败后结束。",
+    "修正停止方案为显式空Cron列表，保留原生队列暂停和状态核实；隐藏标签停止状态轮询，实际发布或暂停需另行授权。",
+    "Agent接入前只保留指定项目查询/暂停，凭证留在服务内；隔离告警文字，合并重复事件，限制整个保护流程的开销并补齐关联记录。",
+    "补充上述只读证据后再评价真实云端保护；当前源码通过项只证明对应设计，不保证实际支出封顶。"
+  ]
+}
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var L = {
+    "zh": {
+      readonly:"只读审计", compact:"精简版", full:"完整版", version:"Skill 版本",
+      summary:"给非程序员的摘要", scope:"审计范围与证据", layers:"四层覆盖",
+      paths:"付费路径清单", findings:"优先发现", unknowns:"待验证项", rules:"规则判定", next:"下一步",
+      pass:"通过", gap:"缺口", unknown:"待验证", na:"不适用", gapRules:"缺口规则：",
+      sev:{critical:"严重", high:"高", medium:"中", low:"低"},
+      where:"位置", why:"为什么花钱", fix:"怎么修", rulesLbl:"规则：",
+      more:"展开技术细节", chain:"执行链", controls:"现有控制", minfix:"最小修复", accept:"验收证据",
+      evidence:"证据等级", verdict:"判定",
+      item:"事项", need:"需要的证据", rule:"规则", reason:"说明",
+      noFindings:"没有已确认的问题。", none:"无",
+      foot:"这是一份只读审计报告，不修改项目，也不是账单封顶。没有查出问题，不代表不会产生意外费用。",
+      gen:"由 audit-cloudflare-costs 生成", bad:"报告数据无法解析，请检查 report-data 中的 JSON。"
+    },
+    "en": {
+      readonly:"Read-only audit", compact:"Compact", full:"Full", version:"Skill version",
+      summary:"Plain-language summary", scope:"Scope and evidence", layers:"Four-layer coverage",
+      paths:"Billable-path inventory", findings:"Prioritized findings", unknowns:"Unknowns and missing evidence",
+      rules:"Rule disposition", next:"Next actions",
+      pass:"PASS", gap:"GAP", unknown:"UNKNOWN", na:"N/A", gapRules:"Gap rules: ",
+      sev:{critical:"Critical", high:"High", medium:"Medium", low:"Low"},
+      where:"Location", why:"Why it costs", fix:"How to fix", rulesLbl:"Rules: ",
+      more:"Technical details", chain:"Execution chain", controls:"Existing controls", minfix:"Minimum fix", accept:"Acceptance evidence",
+      evidence:"Evidence level", verdict:"Verdict",
+      item:"Item", need:"Evidence needed", rule:"Rule", reason:"Reason",
+      noFindings:"No established findings.", none:"none",
+      foot:"Read-only audit report. It changes nothing and is not a spending cap. No findings does not mean no unexpected charges.",
+      gen:"Generated by audit-cloudflare-costs", bad:"Report data could not be parsed. Check the JSON in report-data."
+    }
+  };
+  var SEV_VAR = {critical:"--sev-critical", high:"--sev-high", medium:"--sev-medium", low:"--sev-low"};
+  var V_VAR = {PASS:"--pass", GAP:"--gap", UNKNOWN:"--unknown", NOT_APPLICABLE:"--na"};
+  var app = document.getElementById("app");
+
+  function el(tag, attrs, kids){
+    var n = document.createElement(tag);
+    if (attrs) for (var k in attrs){
+      if (k === "class") n.className = attrs[k];
+      else if (k === "style") n.setAttribute("style", attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function(c){
+      if (c == null || c === "") return;
+      n.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
+    });
+    return n;
+  }
+  function arr(x){ return Array.isArray(x) ? x : (x == null || x === "" ? [] : [x]); }
+  function str(x){ return x == null ? "" : String(x); }
+  function safeUrl(u){ u = str(u).trim(); return /^https?:\/\//i.test(u) ? u : null; }
+  function section(n, title, body){
+    return el("section", null, [el("div", {class:"sec-h"}, [el("span", {class:"n"}, [String(n).padStart(2,"0")]), el("h2", null, [title])]), body]);
+  }
+  function sevKey(s){
+    s = str(s).toLowerCase();
+    if (/crit|严重/.test(s)) return "critical";
+    if (/high|高/.test(s)) return "high";
+    if (/med|中/.test(s)) return "medium";
+    if (/low|低/.test(s)) return "low";
+    return "medium";
+  }
+  function verdictKey(v){
+    v = str(v).toUpperCase();
+    if (/NOT_APPLICABLE|N\/A|不适用/.test(v)) return "NOT_APPLICABLE";
+    if (/PASS|通过/.test(v)) return "PASS";
+    if (/GAP|缺口/.test(v)) return "GAP";
+    return "UNKNOWN";
+  }
+  function vLabel(t, k){ return {PASS:t.pass, GAP:t.gap, UNKNOWN:t.unknown, NOT_APPLICABLE:t.na}[k]; }
+
+  var data;
+  try { data = JSON.parse(document.getElementById("report-data").textContent); }
+  catch(e){ app.appendChild(el("div", {class:"err"}, [L.zh.bad + "\n" + L.en.bad + "\n\n" + e.message])); return; }
+
+  var lang = /^en/i.test(str(data.lang)) ? "en" : "zh";
+  var t = L[lang];
+  document.documentElement.lang = data.lang || (lang === "en" ? "en" : "zh-CN");
+  document.title = str(data.title || "Cloudflare 费用风险审计") + (data.project ? " · " + data.project : "");
+
+  /* hero */
+  var chips = [el("span", {class:"chip ro"}, [t.readonly])];
+  if (data.audit_date) chips.push(el("span", {class:"chip"}, [str(data.audit_date) + (data.timezone ? " · " + data.timezone : "")]));
+  if (data.environment) chips.push(el("span", {class:"chip"}, [str(data.environment)]));
+  chips.push(el("span", {class:"chip"}, [data.mode === "full" ? t.full : t.compact]));
+  if (data.skill_version) chips.push(el("span", {class:"chip"}, [t.version + " " + data.skill_version]));
+  app.appendChild(el("header", {class:"hero"}, [
+    el("div", {class:"kicker"}, [str(data.title || "Cloudflare 费用风险审计")]),
+    el("h1", null, [str(data.project || "")]),
+    el("div", {class:"chips"}, chips)
+  ]));
+
+  /* 1 summary + severity counts */
+  var findings = arr(data.findings);
+  var counts = {critical:0, high:0, medium:0, low:0};
+  findings.forEach(function(f){ counts[sevKey(f.severity)]++; });
+  var sevPills = ["critical","high","medium","low"].filter(function(k){ return counts[k] > 0; }).map(function(k){
+    return el("span", {class:"sevpill"}, [el("span", {class:"dot", style:"background:var(" + SEV_VAR[k] + ")"}), t.sev[k] + " " + counts[k]]);
+  });
+  app.appendChild(el("div", {class:"summary"}, [
+    el("h2", null, ["01 · " + t.summary]),
+    el("ol", null, arr(data.summary).map(function(s){ return el("li", null, [str(s)]); })),
+    sevPills.length ? el("div", {class:"sevbar"}, sevPills) : null
+  ]));
+
+  /* 2 scope */
+  var scope = arr(data.scope);
+  app.appendChild(section(2, t.scope, el("div", {class:"card"}, [
+    scope.length ? el("ul", {class:"lines"}, scope.map(function(s){ return el("li", null, [str(s)]); })) : el("p", {class:"empty"}, [t.none])
+  ])));
+
+  /* 3 layers */
+  var layers = arr(data.layers);
+  app.appendChild(section(3, t.layers, el("div", {class:"layers"}, layers.map(function(ly, i){
+    var p = +ly.pass || 0, g = +ly.gap || 0, u = +ly.unknown || 0, n = +ly.not_applicable || 0, tot = p + g + u + n || 1;
+    function seg(v, c){ return v ? el("span", {style:"width:" + (v / tot * 100) + "%;background:var(" + c + ")"}) : null; }
+    var gr = arr(ly.gap_rules);
+    return el("div", {class:"layer"}, [
+      el("div", {class:"ln"}, [el("span", {class:"num"}, [String(i + 1)]), str(ly.name)]),
+      el("p", null, [str(ly.conclusion)]),
+      el("div", {class:"bar"}, [seg(g,"--gap"), seg(u,"--unknown"), seg(p,"--pass"), seg(n,"--na")]),
+      el("div", {class:"counts"}, [
+        el("span", null, [el("span", {class:"dot", style:"background:var(--gap)"}), " " + t.gap + " ", el("b", null, [String(g)])]),
+        el("span", null, [el("span", {class:"dot", style:"background:var(--unknown)"}), " " + t.unknown + " ", el("b", null, [String(u)])]),
+        el("span", null, [el("span", {class:"dot", style:"background:var(--pass)"}), " " + t.pass + " ", el("b", null, [String(p)])]),
+        el("span", null, [el("span", {class:"dot", style:"background:var(--na)"}), " " + t.na + " ", el("b", null, [String(n)])])
+      ]),
+      gr.length ? el("div", {class:"gaprules mono"}, [t.gapRules + gr.join(", ")]) : null
+    ]);
+  }))));
+
+  /* 4 billable paths */
+  var paths = arr(data.billable_paths);
+  app.appendChild(section(4, t.paths, el("div", {class:"card"}, paths.length ? paths.map(function(pth){
+    var text = typeof pth === "string" ? pth : str(pth.text || pth.path);
+    var st = typeof pth === "string" ? null : verdictKey(pth.status);
+    return el("div", {class:"path"}, [
+      st ? el("span", {class:"tag", style:"background:var(" + V_VAR[st] + ")"}, [vLabel(t, st)]) : el("span", {class:"dot", style:"margin-top:9px;background:var(--accent)"}),
+      el("span", null, [text])
+    ]);
+  }) : [el("p", {class:"empty"}, [t.none])])));
+
+  /* 5 findings */
+  app.appendChild(section(5, t.findings, findings.length ? el("div", null, findings.map(function(f){
+    var sk = sevKey(f.severity);
+    var locs = arr(f.evidence_locations || f.location);
+    var rows = [];
+    if (locs.length) rows.push(el("div", {class:"row"}, [el("div", {class:"k"}, [t.where]), el("div", {class:"v"}, locs.map(function(l){ return el("span", {class:"loc"}, [str(l)]); }))]));
+    if (f.why) rows.push(el("div", {class:"row"}, [el("div", {class:"k"}, [t.why]), el("div", {class:"v"}, [str(f.why)])]));
+    if (f.fix) rows.push(el("div", {class:"row"}, [el("div", {class:"k"}, [t.fix]), el("div", {class:"v"}, [str(f.fix)])]));
+    var extra = [["evidence_levels", t.evidence], ["execution_chain", t.chain], ["existing_controls", t.controls], ["minimum_fix", t.minfix], ["acceptance_evidence", t.accept]]
+      .filter(function(p){ return arr(f[p[0]]).length; })
+      .map(function(p){ return el("div", {class:"row"}, [el("div", {class:"k"}, [p[1]]), el("div", {class:"v"}, [arr(f[p[0]]).map(str).join("；")])]); });
+    var foot = [];
+    var rids = arr(f.rule_ids);
+    if (rids.length) foot.push(el("span", {class:"mono"}, [t.rulesLbl + rids.join("、")]));
+    arr(f.links).forEach(function(lk){
+      var u = safeUrl(lk && lk.url);
+      if (u) foot.push(el("a", {href:u, target:"_blank", rel:"noopener noreferrer"}, [str(lk.label || u)]));
+    });
+    return el("article", {class:"finding", style:"--sev:var(" + SEV_VAR[sk] + ")"}, [
+      el("div", {class:"f-top"}, [el("span", {class:"fid"}, [str(f.id)]), el("span", {class:"sev"}, [t.sev[sk]])].concat(arr(f.layers).map(function(x){ return el("span", {class:"lay"}, [str(x)]); }))),
+      el("h3", null, [str(f.title)]),
+      el("div", null, rows),
+      extra.length ? el("details", null, [el("summary", null, [t.more])].concat(extra)) : null,
+      foot.length ? el("div", {class:"f-foot"}, foot) : null
+    ]);
+  })) : el("div", {class:"card"}, [el("p", {class:"empty"}, [t.noFindings])])));
+
+  /* 6 unknowns */
+  var unk = arr(data.unknowns);
+  app.appendChild(section(6, t.unknowns, el("div", {class:"card"}, [
+    unk.length ? el("table", null, [
+      el("thead", null, [el("tr", null, [el("th", null, [t.item]), el("th", null, [t.need])])]),
+      el("tbody", null, unk.map(function(u){
+        return typeof u === "string" ? el("tr", null, [el("td", {colspan:"2"}, [u])])
+          : el("tr", null, [el("td", null, [str(u.item)]), el("td", null, [str(u.evidence_needed)])]);
+      }))
+    ]) : el("p", {class:"empty"}, [t.none])
+  ])));
+
+  /* 7 rule disposition */
+  var rd = arr(data.rule_disposition);
+  var rdBody = [el("ul", {class:"lines"}, layers.map(function(ly){
+    var gr = arr(ly.gap_rules);
+    return el("li", null, [el("b", null, [str(ly.name)]), "　" + t.pass + " " + (+ly.pass||0) + " / " + t.gap + " " + (+ly.gap||0) + " / " + t.unknown + " " + (+ly.unknown||0) + " / " + t.na + " " + (+ly.not_applicable||0) + (gr.length ? "　" + t.gapRules + gr.join("、") : "")]);
+  }))];
+  if (rd.length) rdBody.push(el("details", null, [el("summary", null, [t.rules + " · " + rd.length]), el("table", null, [
+    el("thead", null, [el("tr", null, [el("th", null, [t.rule]), el("th", null, [t.verdict]), el("th", null, [t.reason])])]),
+    el("tbody", null, rd.map(function(r){
+      var vk = verdictKey(r.verdict);
+      return el("tr", null, [el("td", {class:"mono"}, [str(r.rule_id)]), el("td", null, [el("span", {class:"verdict", style:"background:var(" + V_VAR[vk] + ")"}, [vLabel(t, vk)])]), el("td", null, [str(r.reason)])]);
+    }))
+  ])]));
+  app.appendChild(section(7, t.rules, el("div", {class:"card"}, rdBody)));
+
+  /* 8 next actions */
+  var nx = arr(data.next_actions);
+  app.appendChild(section(8, t.next, el("div", {class:"card"}, [
+    nx.length ? el("ol", {class:"next"}, nx.map(function(s){ return el("li", null, [str(s)]); })) : el("p", {class:"empty"}, [t.none])
+  ])));
+
+  app.appendChild(el("footer", null, [
+    el("strong", null, [t.foot]), el("br"),
+    t.gen + (data.skill_version ? " v" + data.skill_version : "") + " · ",
+    el("a", {href:"https://github.com/davezfr/audit-cloudflare-costs", target:"_blank", rel:"noopener noreferrer"}, ["github.com/davezfr/audit-cloudflare-costs"])
+  ]));
+})();
+</script>
+</body>
+</html>
