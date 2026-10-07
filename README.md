@@ -28,6 +28,8 @@ $audit-cloudflare-costs 帮我检查这个项目的 Cloudflare 费用风险
 
 `audit-cloudflare-costs` 是给 AI 助手使用的审计指令和检查清单，用于检查已有 Cloudflare 项目的付费路径、费用限制、自动暂停能力，以及已有或明确计划的 Agent 接管方案。
 
+**实测情况。** v0.2.1 已在 Claude Code、Codex 和 ChatGPT 中分别对 demo 项目做过只读审计，三者都找出了预先埋下的 8 个问题。不同模型对严重程度的判断和问题的合并方式会有出入，请以报告中的代码位置和证据为准，严重程度仅供参考。
+
 ### 一句话就会采用的默认行为
 
 上面的一句话与进阶长提示使用**同一组默认行为**，无需反复添加限制条件才能得到以下结果：
@@ -183,6 +185,8 @@ $audit-cloudflare-costs Help me check this project's Cloudflare cost risks
 These are conversation inputs: Claude Code uses `/`; Codex uses `$`. To see the workflow first, use the included [demo](#try-the-demo). Detailed installation and longer prompts appear in the advanced sections. The local paths and invocation syntax were checked against the [Claude Code documentation](https://code.claude.com/docs/en/skills) and [OpenAI documentation](https://learn.chatgpt.com/docs/build-skills), with a reference baseline of **2026-10-07**.
 
 `audit-cloudflare-costs` is an instruction and checklist package for an AI assistant to inspect an existing Cloudflare project's billable paths, cost limits, automatic pause mechanisms, and existing or explicitly planned agent takeover arrangements.
+
+**Tested.** v0.2.1 was run read-only against the demo in Claude Code, Codex, and ChatGPT; all three found the 8 seeded issues. Models may differ in severity and in how they group findings, so rely on the cited code locations and evidence; treat severity as guidance.
 
 ### Defaults that already apply to the one-line prompt
 
