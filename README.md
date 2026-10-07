@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/banner.png" alt="audit-cloudflare-costs：Cloudflare 费用风险审计，只读 Skill，四层 51 条规则" width="100%"></p>
+
 # audit-cloudflare-costs
 
 **v0.2.1 · Cloudflare 费用风险只读审计 / Read-only Cloudflare cost-risk audit**
